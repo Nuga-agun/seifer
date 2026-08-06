@@ -28,7 +28,7 @@ impl StreamCipher for Caesar {
 }
 
 #[cfg(test)]
-mod tests {
+mod tests_caesar {
     use super::*;
 
     #[test]
