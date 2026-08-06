@@ -19,12 +19,6 @@ impl StreamCipher for Caesar {
             return input.wrapping_sub(self.key);
         }
     }
-    fn process_stream(key: &[u8], input: &[u8], decrypt: bool) -> Result<Box<[u8]>, &'static str> {
-        match Caesar::init(key) {
-            Ok(c) => Ok(input.iter().map(|byte| c.process(byte, decrypt)).collect()),
-            Err(msg) => Err(msg)
-        }
-    }
 }
 
 #[cfg(test)]
@@ -32,7 +26,7 @@ mod tests_caesar {
     use super::*;
 
     #[test]
-    fn test_empty_key_initialiatioin() {
+    fn test_empty_key_initialization() {
         match Caesar::init("".as_bytes()) {
             Ok(_) => panic!(),
             Err(msg) => assert_eq!(msg,EMPTY_KEY_MSG)
