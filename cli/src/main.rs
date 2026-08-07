@@ -15,6 +15,7 @@ enum Format {
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 enum Algorithm {
     Caesar,
+    Rc4,
 }
 
 #[derive(Parser)]
@@ -57,7 +58,8 @@ fn main() {
     };
 
     let result = match cli.algorithm {
-        Algorithm::Caesar => Caesar::process_stream(cli.key.as_bytes(), &input, cli.decrypt)
+        Algorithm::Caesar => Caesar::process_stream(cli.key.as_bytes(), &input, cli.decrypt),
+        Algorithm::Rc4 => Rc4::process_stream(cli.key.as_bytes(), &input, cli.decrypt),
     }.unwrap_or_else(|e| panic!("Error : {e}"));
 
     match cli.output_file {

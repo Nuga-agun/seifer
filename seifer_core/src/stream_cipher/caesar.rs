@@ -12,7 +12,7 @@ impl StreamCipher for Caesar {
         }
         Ok(Box::new(Caesar { key: key[0] }))
     }
-    fn process(&self, input: &u8, decrypt: bool) -> u8 {
+    fn process(&mut self, input: &u8, decrypt: bool) -> u8 {
         if decrypt {
             return input.wrapping_add(self.key);
         } else {

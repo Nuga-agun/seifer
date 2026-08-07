@@ -3,7 +3,9 @@ use super::StreamCipher;
 const EMPTY_KEY_MSG: &'static str = "The key is missing!";
 
 pub struct Rc4 {
-    s: [u8;256]
+    s: [u8;256],
+    i: u8,
+    j: u8
 }
 
 impl StreamCipher for Rc4 {
@@ -15,13 +17,18 @@ impl StreamCipher for Rc4 {
         let mut j: u8 = 0;
         for i in 0..256 {
             let offset = key[i%key.len()];
-            j = j.wrapping_add(s[j as usize]).wrapping_add(offset);
+            j = j.wrapping_add(s[i as usize]).wrapping_add(offset);
             utils::swap_bytes(&mut s, i, j as usize);
         }
-        Ok(Box::new(Rc4{s}))
+        Ok(Box::new(Rc4{s, i:0, j:0}))
     }
-    fn process(&self, input: &u8, decrypt: bool) -> u8 {
-        todo!();
+    fn process(&mut self, input: &u8, _decrypt: bool) -> u8 {
+        self.i = self.i.wrapping_add(1);
+        let si = self.s[self.i as usize];
+        self.j = self.j.wrapping_add(si);
+        let sj = self.s[self.j as usize];
+        utils::swap_bytes(&mut self.s, si as usize, sj as usize);
+        self.s[si.wrapping_add(sj) as usize]^input
     }
 }
 
