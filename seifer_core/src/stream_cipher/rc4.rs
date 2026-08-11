@@ -9,7 +9,10 @@ pub struct Rc4 {
 }
 
 impl StreamCipher for Rc4 {
-    fn init(key: &[u8]) -> Result<Box<Self>, &'static str> {
+    type Input = u8;
+    type Key = Vec<u8>;
+    type Iv = ();
+    fn init(key: &Self::Key, _iv: &Self::Iv) -> Result<Box<Self>, &'static str> {
         if key.len() == 0 {
             return Err(EMPTY_KEY_MSG);
         }
@@ -22,7 +25,7 @@ impl StreamCipher for Rc4 {
         }
         Ok(Box::new(Rc4{s, i:0, j:0}))
     }
-    fn process(&mut self, input: &u8, _decrypt: bool) -> u8 {
+    fn process(&mut self, input: &Self::Input, _decrypt: bool) -> u8 {
         self.i = self.i.wrapping_add(1);
         let si = self.s[self.i as usize];
         self.j = self.j.wrapping_add(si);
@@ -30,6 +33,13 @@ impl StreamCipher for Rc4 {
         utils::swap_bytes(&mut self.s, si as usize, sj as usize);
         self.s[si.wrapping_add(sj) as usize]^input
     }
+    fn key_from_bytes(bytes: &[u8]) -> Result<Self::Key, &'static str> {
+        match bytes.len() {
+            0 => Err(EMPTY_KEY_MSG),
+            _ => Ok(bytes.to_vec())
+        }
+    }
+
 }
 
 #[cfg(test)]
@@ -38,7 +48,7 @@ mod test_rc4 {
 
     #[test]
     fn empty_key_initialization() {
-        match Rc4::init("".as_bytes()) {
+        match Rc4::init(&Vec::new(), &()) {
             Ok(_) => panic!(),
             Err(msg) => assert_eq!(msg,EMPTY_KEY_MSG)
         }
@@ -46,7 +56,14 @@ mod test_rc4 {
 
     #[test]
     fn big_key_initialization() {
-        let big_key: [u8;500] = [0;500];
-        Rc4::init(&big_key).unwrap();
+        Rc4::init(&[0u8;500].to_vec(), &()).unwrap();
+    }
+
+    #[test]
+    fn encryption_decryption() {
+        let key = "clef".as_bytes().to_vec();
+        let mut encryptor = Rc4::init(&key, &()).unwrap();
+        let mut decryptor = Rc4::init(&key, &()).unwrap();
+        assert_eq!(decryptor.process(&encryptor.process(&1u8, false), true), 1u8);
     }
 }
