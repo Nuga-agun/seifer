@@ -15,6 +15,7 @@ enum Format {
 enum Algorithm {
     Caesar,
     Rc4,
+    Hc128,
 }
 
 #[derive(Parser)]
@@ -23,6 +24,7 @@ struct Seifer {
     algorithm: Algorithm,
     key: String,
     input: String,
+    iv: Option<String>,
 
     #[arg(short,long)]
     decrypt: bool,
@@ -59,6 +61,19 @@ fn main() {
     let result = match cli.algorithm {
         Algorithm::Caesar => Caesar::process_stream(cli.key.as_bytes(), &(), &input, cli.decrypt),
         Algorithm::Rc4 => Rc4::process_stream(cli.key.as_bytes(), &(), &input, cli.decrypt),
+        Algorithm::Hc128 => {
+            let iv = match cli.decrypt {
+                true => {
+                    let bytes = convert_to_bytes(cli.iv.unwrap_or_else(|| panic!("Error : an initialization vector is necessary for decrypting with Hc-128")), Format::Hex);
+                    Hc128::iv_from_bytes(&bytes).unwrap_or_else(|msg| panic!("Error while parsing initialization vector : {msg}"))
+                },
+                false => Hc128::random_iv(),
+            };
+            print!("IV : ");
+            for byte in Hc128::bytes_from_iv(&iv) {print!("{:02x}", byte);}
+            println!("");
+            Hc128::process_stream(cli.key.as_bytes(), &iv, &input, cli.decrypt)
+        },
     }.unwrap_or_else(|e| panic!("Error : {e}"));
 
     match cli.output_file {

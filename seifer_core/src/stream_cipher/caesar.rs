@@ -10,6 +10,19 @@ impl StreamCipher for Caesar {
     type Key = u8;
     type Iv = ();
 
+    fn key_from_bytes(bytes: &[u8]) -> Result<Self::Key, &'static str> {
+        match bytes.len() {
+            0 => Err(EMPTY_KEY_MSG),
+            _ => Ok(bytes[0])
+        }
+    }
+    fn stream_from_bytes(bytes: &[u8]) -> Vec<Self::Input> {
+        bytes.to_vec()
+    }
+    fn bytes_from_input(input: Vec<Self::Input>) -> Vec<u8> {
+        input
+    }
+
     fn init(key: &Self::Key, _iv: &Self::Iv) -> Result<Box<Self>, &'static str> {
         Ok(Box::new(Caesar { key: *key }))
     }
@@ -18,12 +31,6 @@ impl StreamCipher for Caesar {
             return input.wrapping_add(self.key);
         } else {
             return input.wrapping_sub(self.key);
-        }
-    }
-    fn key_from_bytes(bytes: &[u8]) -> Result<Self::Key, &'static str> {
-        match bytes.len() {
-            0 => Err(EMPTY_KEY_MSG),
-            _ => Ok(bytes[0])
         }
     }
 }

@@ -12,6 +12,20 @@ impl StreamCipher for Rc4 {
     type Input = u8;
     type Key = Vec<u8>;
     type Iv = ();
+
+    fn key_from_bytes(bytes: &[u8]) -> Result<Self::Key, &'static str> {
+        match bytes.len() {
+            0 => Err(EMPTY_KEY_MSG),
+            _ => Ok(bytes.to_vec())
+        }
+    }
+    fn stream_from_bytes(bytes: &[u8]) -> Vec<Self::Input> {
+        bytes.to_vec()
+    }
+    fn bytes_from_input(input: Vec<Self::Input>) -> Vec<u8> {
+        input
+    }
+
     fn init(key: &Self::Key, _iv: &Self::Iv) -> Result<Box<Self>, &'static str> {
         if key.len() == 0 {
             return Err(EMPTY_KEY_MSG);
@@ -32,12 +46,6 @@ impl StreamCipher for Rc4 {
         let sj = self.s[self.j as usize];
         utils::swap_bytes(&mut self.s, si as usize, sj as usize);
         self.s[si.wrapping_add(sj) as usize]^input
-    }
-    fn key_from_bytes(bytes: &[u8]) -> Result<Self::Key, &'static str> {
-        match bytes.len() {
-            0 => Err(EMPTY_KEY_MSG),
-            _ => Ok(bytes.to_vec())
-        }
     }
 
 }
