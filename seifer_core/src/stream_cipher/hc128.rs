@@ -3,7 +3,7 @@ use getrandom::rand_core::{Rng,UnwrapErr};
 use getrandom::SysRng;
 
 const INVALID_KEY_SIZE_MSG: &'static str = "The key must be 128 bits long";
-const INVALID_IV_SIZE_MSG: &'static str = "The key must be 128 bits long";
+const INVALID_IV_SIZE_MSG: &'static str = "The initialization vector must be 128 bits long";
 
 pub struct Hc128 {
     p: [u32;512],

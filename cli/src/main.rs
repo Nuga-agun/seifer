@@ -1,8 +1,8 @@
 use seifer_core::*;
-
 use clap::{Parser,ValueEnum};
 use std::io::{Write,Read};
 use std::fs::File;
+use std::fmt::{self,Display};
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 enum Format {
@@ -16,6 +16,22 @@ enum Algorithm {
     Caesar,
     Rc4,
     Hc128,
+    Tea,
+}
+impl Display for Algorithm {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", match self {
+            Self::Caesar => "Caesar",
+            Self::Rc4 => "Rc4",
+            Self::Hc128 => "Hc128",
+            Self::Tea => "Tea",
+        })
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+enum BlockMode {
+    Ecb,
 }
 
 #[derive(Parser)]
@@ -37,6 +53,9 @@ struct Seifer {
 
     #[arg(short,long)]
     format_clear: Option<Format>,
+
+    #[arg(short,long)]
+    block_mode: Option<BlockMode>,
 }
 
 fn main() {
@@ -58,6 +77,11 @@ fn main() {
         false => convert_to_bytes(cli.input, input_format)
     };
 
+    let block_ciphers = vec![Algorithm::Tea];
+    if cli.block_mode.is_none() && block_ciphers.contains(&cli.algorithm) {
+        panic!("Error: a block mode is required for {}", cli.algorithm);
+    }
+
     let result = match cli.algorithm {
         Algorithm::Caesar => Caesar::process_stream(cli.key.as_bytes(), &(), &input, cli.decrypt),
         Algorithm::Rc4 => Rc4::process_stream(cli.key.as_bytes(), &(), &input, cli.decrypt),
@@ -74,6 +98,7 @@ fn main() {
             println!("");
             Hc128::process_stream(cli.key.as_bytes(), &iv, &input, cli.decrypt)
         },
+        Algorithm::Tea => Tea::process_stream::<Ecb>(cli.key.as_bytes(), &[], &input, cli.decrypt),
     }.unwrap_or_else(|e| panic!("Error : {e}"));
 
     match cli.output_file {
